@@ -33,8 +33,4 @@
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="src\Shader\fragment shader\colorful_box.frag" />
-    <None Include="src\Shader\vertex shader\colorful_box.vert" />
-  </ItemGroup>
 </Project>

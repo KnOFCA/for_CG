@@ -1,4 +1,4 @@
-#if 1
+#if 0
 #include <iostream>
 #include <chrono>
 
@@ -11,7 +11,7 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-glm::mat4 axial_rotation(glm::mat4 ori_model, glm::vec3 axi, glm::vec3 pos);
+glm::mat4 axial_rotation(const glm::mat4& ori_model, glm::vec3 axi, glm::vec3 pos, float angle);
 
 // settings
 #ifndef SIZE
@@ -22,7 +22,6 @@ const unsigned int SCR_HEIGHT = 600;
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-glm::vec3 pos_offset = glm::vec3(0.0f, 0.0f, 0.0f);
 
 glm::mat4 model(1.0f);
 glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
@@ -31,7 +30,7 @@ glm::mat4 proj;
 bool firstMouse = true;
 float lastX = 450, lastY = 300;
 float yaw = -90.0f, pitch = 0.0f;
-bool press_Q = false, press_E = false;
+bool press_Q = false, press_E = false, press_QE_l = false;
 float rotate_radian = 0.5f;
 
 int main()
@@ -158,11 +157,10 @@ int main()
     ColorfulBoxShader.setMat4("model", model);
     ColorfulBoxShader.setMat4("view", view);
     ColorfulBoxShader.setMat4("projection", proj);
-    ColorfulBoxShader.setVec3("offset", pos_offset);
 
     std::vector<glm::vec3>pos_vector;
-    pos_vector.push_back({ -2.0f, 0.0f, 0.0f });
-    pos_vector.push_back({ -1.0f, -2.0f, 0.0f });
+    pos_vector.push_back({ 2.0f, 0.0f, 0.0f });
+    pos_vector.push_back({ 1.0f, 2.0f, 0.0f });
     pos_vector.push_back({ 0.0f, 0.0f, 0.0f });
     int offset_order = 0;
 
@@ -186,30 +184,37 @@ int main()
         ColorfulBoxShader.setMat4("view", view);
 
         if (press_Q || press_E) {
-            u_model = axial_rotation(model, glm::vec3(0.0f, 0.0f, 1.0f), pos_vector[offset_order]);
+            u_model = axial_rotation(model, glm::vec3(0.0f, 0.0f, 1.0f), pos_vector[offset_order++], rotate_radian);
+        }
+        else {
+            u_model = glm::translate(model, pos_vector[offset_order++]);
         }
         ColorfulBoxShader.setMat4("model", u_model);
-        ColorfulBoxShader.setVec3("offset", pos_vector[offset_order++]);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
         if (press_Q || press_E) {
-            u_model = axial_rotation(model, glm::vec3(0.0f, 0.0f, 1.0f), pos_vector[offset_order]);
+            u_model = axial_rotation(model, glm::vec3(0.0f, 0.0f, 1.0f), pos_vector[offset_order++], rotate_radian);
+        }
+        else {
+            u_model = glm::translate(model, pos_vector[offset_order++]);
         }
         ColorfulBoxShader.setMat4("model", u_model);
-        ColorfulBoxShader.setVec3("offset", pos_vector[offset_order++]);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
         if (press_Q || press_E) {
-            u_model = axial_rotation(model, glm::vec3(0.0f, 0.0f, 1.0f), pos_vector[offset_order]);
+            u_model = axial_rotation(model, glm::vec3(0.0f, 0.0f, 1.0f), pos_vector[offset_order++], rotate_radian);
+        }
+        else {
+            u_model = glm::translate(model, pos_vector[offset_order++]);
         }
         ColorfulBoxShader.setMat4("model", u_model);
-        ColorfulBoxShader.setVec3("offset", pos_vector[offset_order++]);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        if (press_Q || press_E) {
+        if (press_QE_l && !press_Q && !press_E) {
             model = u_model;
+            rotate_radian = 0;
         }
-        else u_model = model;
+        u_model = model;
 
         offset_order = 0;
         press_Q = false;
@@ -248,12 +253,14 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
         model[3][0] += 0.01;
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        if (press_Q)press_QE_l = true;
         press_Q = true;
-        rotate_radian = abs(rotate_radian);
+        rotate_radian += 0.5f;
     }
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+        if (press_E)press_QE_l = true;
         press_E = true;
-        rotate_radian = -abs(rotate_radian);
+        rotate_radian -= 0.5f;
     }
     if (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS) {
         model = glm::scale(model, glm::vec3(1.01f, 1.01f, 1.01f));
@@ -301,12 +308,11 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     cameraFront = glm::normalize(front);
 }
 
-glm::mat4 axial_rotation(glm::mat4 ori_model, glm::vec3 axi, glm::vec3 pos)
+glm::mat4 axial_rotation(const glm::mat4& ori_model, glm::vec3 axi, glm::vec3 pos, float angle)
 {
-        glm::mat4 u_model = glm::translate(ori_model, -pos);
-        u_model = glm::rotate(u_model, glm::radians(rotate_radian), axi);
-        u_model = glm::translate(u_model, pos);
-        return u_model;
+    glm::mat4 u_model = glm::translate(ori_model, pos);
+    u_model = glm::rotate(u_model, glm::radians(angle), axi);
+    return u_model;
 }
 
 #endif

@@ -5,6 +5,8 @@ VisualStudioVersion = 17.7.34202.233
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "for_CG", "for_CG\for_CG.vcxproj", "{A84D9547-624B-450B-8452-78ECD71ED6A4}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Bezier", "Bezier\Bezier.vcxproj", "{DECBBA10-C358-4E0D-9BB6-BDD9D047CC3D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{A84D9547-624B-450B-8452-78ECD71ED6A4}.Release|x64.Build.0 = Release|x64
 		{A84D9547-624B-450B-8452-78ECD71ED6A4}.Release|x86.ActiveCfg = Release|Win32
 		{A84D9547-624B-450B-8452-78ECD71ED6A4}.Release|x86.Build.0 = Release|Win32
+		{DECBBA10-C358-4E0D-9BB6-BDD9D047CC3D}.Debug|x64.ActiveCfg = Debug|x64
+		{DECBBA10-C358-4E0D-9BB6-BDD9D047CC3D}.Debug|x64.Build.0 = Debug|x64
+		{DECBBA10-C358-4E0D-9BB6-BDD9D047CC3D}.Debug|x86.ActiveCfg = Debug|Win32
+		{DECBBA10-C358-4E0D-9BB6-BDD9D047CC3D}.Debug|x86.Build.0 = Debug|Win32
+		{DECBBA10-C358-4E0D-9BB6-BDD9D047CC3D}.Release|x64.ActiveCfg = Release|x64
+		{DECBBA10-C358-4E0D-9BB6-BDD9D047CC3D}.Release|x64.Build.0 = Release|x64
+		{DECBBA10-C358-4E0D-9BB6-BDD9D047CC3D}.Release|x86.ActiveCfg = Release|Win32
+		{DECBBA10-C358-4E0D-9BB6-BDD9D047CC3D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
