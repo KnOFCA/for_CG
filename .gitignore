@@ -362,3 +362,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /Bezier/src/image
+/Bezier/html
+/Bezier/latex
