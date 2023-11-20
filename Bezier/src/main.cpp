@@ -10,9 +10,10 @@
 #include "Bezier.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window);
+void processInput(GLFWwindow* window, Bezier& bezier);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+//Todo: consider use factory to register diffrent func for diffrent Bezier line
 void mouse_clickCallBack(GLFWwindow* window, int button, int state, int mod);
 //set binomial coefficients
 void set_BC_arr(std::vector<float>& BC_arr, int n);
@@ -25,20 +26,10 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 #endif // !SIZE
 
-std::vector<float> init_ctr_points = {
-     0.5f, 0.5f,
-     0.5f, -0.5f,
-    -0.5f, -0.5f,
-};
-std::vector<float> BC_arr{};
-int BC_order = 2;
-std::vector<float> ctr_points = {
-     0.5f, 0.5f,
-     0.5f, -0.5f,
-    -0.5f, -0.5f,
-};
 int current_ctr_point = 1;
-float precision = 0.05, speed = 0.01;
+float speed = 0.01;
+
+Bezier line1;
 
 int main()
 {
@@ -70,7 +61,6 @@ int main()
 
     Shader BezierShader("D:\\Source\\repos\\for_CG\\Bezier\\src\\Shader\\vertex shader\\Bezier.vert", "D:\\Source\\repos\\for_CG\\Bezier\\src\\Shader\\fragment shader\\Bezier.frag");
 
-    Bezier line1;
 
     unsigned int ctr_VBO, ctr_VAO;
     glGenVertexArrays(1, &ctr_VAO);
@@ -84,8 +74,6 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    std::vector<float>line_points{};
-
     unsigned int line_VBO, line_VAO;
     glGenVertexArrays(1, &line_VAO);
     glGenBuffers(1, &line_VBO);
@@ -98,15 +86,9 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    //binomial coefficients array
-    set_BC_arr(BC_arr, BC_order);
-
-    //initial line
-    set_line_points(line_points, BC_arr, ctr_points, ctr_points.size() / 2 - 1, precision);
-
     while (!glfwWindowShouldClose(window))
     {
-        processInput(window);
+        processInput(window, line1);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -119,7 +101,6 @@ int main()
         BezierShader.setVec3("Color", glm::vec3(1.0f, 1.0f, 0.0f));
         glDrawArrays(GL_POINTS, 0, line1.get_ctr_num());
 
-        set_line_points(line_points, BC_arr, ctr_points, ctr_points.size() / 2 - 1, precision);
         BezierShader.use();
         glBindVertexArray(line_VAO);
         glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
@@ -138,22 +119,28 @@ int main()
     return 0;
 }
 
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow* window, Bezier& bezier)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        ctr_points[2 * current_ctr_point + 1] += speed;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        ctr_points[2 * current_ctr_point + 1] -= speed;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        ctr_points[2 * current_ctr_point] -= speed;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        ctr_points[2 * current_ctr_point] += speed;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        bezier.get_ctr_pointer()[2 * current_ctr_point + 1] += speed;
+        bezier.set_line_points();
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        bezier.get_ctr_pointer()[2 * current_ctr_point + 1] -= speed;
+        bezier.set_line_points();
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        bezier.get_ctr_pointer()[2 * current_ctr_point] -= speed;
+        bezier.set_line_points();
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        bezier.get_ctr_pointer()[2 * current_ctr_point] += speed;
+        bezier.set_line_points();
+    }
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-        ctr_points = init_ctr_points;
-        BC_order = 2;
-        set_BC_arr(BC_arr, BC_order);
+        bezier.reset_ctr_points();
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
         speed = 0.005;
@@ -180,18 +167,15 @@ void mouse_clickCallBack(GLFWwindow* window, int button, int state, int mod)
     double x, y;
     if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS) {
         glfwGetCursorPos(window, &x, &y);
-        for (int i = 0; i < ctr_points.size() / 2; i++) {
-            if (abs((ctr_points[2 * i]+1) * SCR_WIDTH / 2 - x) <= 5 && abs((ctr_points[2 * i + 1]-1) * SCR_HEIGHT / 2 + y) <= 5)
+        for (int i = 0; i < line1.get_ctr_num(); i++) {
+            if (abs((line1.get_ctr_pointer()[2 * i]+1) * SCR_WIDTH / 2 - x) <= 5 && abs((line1.get_ctr_pointer()[2 * i + 1]-1) * SCR_HEIGHT / 2 + y) <= 5)
                 current_ctr_point = i;
         }
         std::cout << current_ctr_point << " " << x - SCR_WIDTH / 2 << " " << -y + SCR_HEIGHT / 2 << std::endl;
     }
     if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS) {
         glfwGetCursorPos(window, &x, &y);
-        ctr_points.push_back((x - SCR_WIDTH / 2) * 2 / SCR_WIDTH);
-        ctr_points.push_back((SCR_HEIGHT / 2 - y) * 2 / SCR_HEIGHT);
-        BC_order++;
-        set_BC_arr(BC_arr, BC_order);
+        line1.add_ctr_point((x - SCR_WIDTH / 2) * 2 / SCR_WIDTH, (SCR_HEIGHT / 2 - y) * 2 / SCR_HEIGHT);
     }
 }
 

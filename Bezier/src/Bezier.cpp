@@ -92,10 +92,19 @@ float* Bezier::get_line_pointer()
     return line_points.data();
 }
 
+void Bezier::add_ctr_point(float x, float y)
+{
+    ctr_points.push_back(x);
+    ctr_points.push_back(y);
+    BC_order++;
+    set_BC_arr();
+    set_line_points();
+}
+
 void Bezier::reset_ctr_points()
 {
-    ctr_points = init_ctr_points;
-    BC_order = init_ctr_points.size() / 2;
+    ctr_points = ss_ctr_points;
+    BC_order = ss_ctr_points.size() / 2;
     set_BC_arr();
     set_line_points();
 }

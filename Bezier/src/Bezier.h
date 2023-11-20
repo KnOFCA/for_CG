@@ -11,15 +11,18 @@
  *
  *  data range: -1.0f to 1.0f.\n
  * 
- *  @errors 
+ *  @exception
  */
 class Bezier
 {
-	std::vector<float> init_ctr_points, BC_arr, ctr_points, line_points;
+	std::vector<float> ss_ctr_points; /// store snapshot control points array
+	std::vector<float> BC_arr; /// binomial coefficients array
+	std::vector<float> ctr_points; /// control points array
+	std::vector<float> line_points; /// calculated points on Bezier line
 	int BC_order;
 	float precision;
 public:
-	Bezier() :init_ctr_points({
+	Bezier() :ss_ctr_points({
 			0.5f, 0.5f,
 			0.5f, -0.5f,
 			-0.5f, -0.5f,
@@ -45,7 +48,7 @@ public:
 			throw std::exception("illegal input: check if it can make pairs (x,y).");
 		}
 		else {
-			init_ctr_points = init;
+			ss_ctr_points = init;
 			ctr_points = init;
 			line_points.clear();
 			BC_order = init.size() / 2 - 1;
@@ -58,7 +61,7 @@ public:
 	/** 
 	 *  @brief function to set control point.
 	 *
-	 *  @error Throw exception if order out of range.
+	 *  @exception Throw exception if order out of range.
 	 *  @param[in] order: order in the control point array, value from 0 to (control points num - 1).
 	 *  @param[in] x & y: where the new pos is.
 	 */
@@ -112,6 +115,14 @@ public:
 	 * @return a float pointer refers to 0 pos of line points array.
 	 */
 	float* get_line_pointer();
+
+	/**
+	 * @brief add a control point to the back of control points array, also set BC_order and calculate BC_array.
+	 * 
+	 * @param[in] x
+	 * @param[in] y
+	 */
+	void add_ctr_point(float x, float y);
 
 	/**
 	 * @brief reset control points to initial ones.
