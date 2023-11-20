@@ -5,20 +5,19 @@
 
 #include "objects.h"
 
-/** @brief class contain all info to draw a Bezier line.\n
+/** @brief class contain all info to draw a Bezier line.\brief
  *
- *  coordinate sys: zero point in the center of window, x right, y up
+ *  @detail coordinate sys: zero point in the center of window, x right, y up.\n
  *
- *  data range: -1.0f to 1.0f
- *
- *  member:
+ *  data range: -1.0f to 1.0f.\n
  * 
+ *  @errors 
  */
 class Bezier
 {
-	std::vector<float> init_ctr_points, BC_arr, ctr_points;
-	int BC_order, current_ctr_point;
-	float precision, speed;
+	std::vector<float> init_ctr_points, BC_arr, ctr_points, line_points;
+	int BC_order;
+	float precision;
 public:
 	Bezier() :init_ctr_points({
 			0.5f, 0.5f,
@@ -30,14 +29,94 @@ public:
 			 0.5f, -0.5f,
 			-0.5f, -0.5f,
 		}), 
-		BC_arr(), BC_order(2), current_ctr_point(1), precision(0.05), speed(0.01) {}
+		line_points(), BC_arr(), BC_order(2), precision(0.05) {
+		set_BC_arr();
+		set_line_points();
+	}
 
-	/** @brief function to set control point.
+	/**
+	 * @brief set initial control points. Throw exception if param vector can not make up legal point
+	 * 
+	 * \param init
+	 */
+	Bezier(const std::vector<float>& init)
+	{
+		if (init.size() / 2 == 1) {
+			throw std::exception("illegal input: check if it can make pairs (x,y).");
+		}
+		else {
+			init_ctr_points = init;
+			ctr_points = init;
+			line_points.clear();
+			BC_order = init.size() / 2 - 1;
+			precision = 0.05;
+			set_BC_arr();
+			set_line_points();
+		}
+	}
+
+	/** 
+	 *  @brief function to set control point.
 	 *
+	 *  @error Throw exception if order out of range.
 	 *  @param[in] order: order in the control point array, value from 0 to (control points num - 1).
 	 *  @param[in] x & y: where the new pos is.
 	 */
 	void set_ctr_point(int order, float x, float y);
 
+	/**
+	 *  @brief calculate binomial coefficients array.
+	 *
+	 *  @param[in] order: the binomial coefficient order
+	 */
+	void set_BC_arr();
+
+	/**
+	 * @brief calculate Bezier line. store in line_points array
+	 * 
+	 */
+	void set_line_points();
+
+	/**
+	 * @brief set precision. Smaller precision can get better effect but calculate more and need more space.
+	 * 
+	 * @param[in] new_precision
+	 */
+	void set_precision(float new_precision);
+
+	/**
+	 * @brief get current binomial coefficient order.
+	 */
+	int get_BC_order();
+
+	/**
+	 * @brief get control points num.
+	 */
+	int get_ctr_num();
+
+	/**
+	 * @brief get control points array pointer from pos 0.
+	 * 
+	 * @return a float pointer refers to 0 pos of control points array.
+	 */
+	float* get_ctr_pointer();
+
+	/**
+	 * @brief get line points num.
+	 */
+	int get_line_num();
+
+	/**
+	 * @brief get line points array pointer from pos 0.
+	 *
+	 * @return a float pointer refers to 0 pos of line points array.
+	 */
+	float* get_line_pointer();
+
+	/**
+	 * @brief reset control points to initial ones.
+	 * 
+	 */
+	void reset_ctr_points();
 
 };

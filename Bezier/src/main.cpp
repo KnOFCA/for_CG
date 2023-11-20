@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 
 #include "objects.h"
+#include "Bezier.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -69,6 +70,7 @@ int main()
 
     Shader BezierShader("D:\\Source\\repos\\for_CG\\Bezier\\src\\Shader\\vertex shader\\Bezier.vert", "D:\\Source\\repos\\for_CG\\Bezier\\src\\Shader\\fragment shader\\Bezier.frag");
 
+    Bezier line1;
 
     unsigned int ctr_VBO, ctr_VAO;
     glGenVertexArrays(1, &ctr_VAO);
@@ -77,7 +79,7 @@ int main()
     glBindVertexArray(ctr_VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, ctr_VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*ctr_points.size(), ctr_points.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * line1.get_ctr_num() * 2, line1.get_ctr_pointer(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -91,7 +93,8 @@ int main()
     glBindVertexArray(line_VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*line_points.size(), line_points.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*line1.get_line_num()*2, line1.get_line_pointer(), GL_STATIC_DRAW);
+
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -112,17 +115,17 @@ int main()
         BezierShader.use();
         glBindVertexArray(ctr_VAO);
         glBindBuffer(GL_ARRAY_BUFFER, ctr_VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * ctr_points.size(), ctr_points.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * line1.get_ctr_num() * 2, line1.get_ctr_pointer(), GL_STATIC_DRAW);
         BezierShader.setVec3("Color", glm::vec3(1.0f, 1.0f, 0.0f));
-        glDrawArrays(GL_POINTS, 0, ctr_points.size() / 2);
+        glDrawArrays(GL_POINTS, 0, line1.get_ctr_num());
 
         set_line_points(line_points, BC_arr, ctr_points, ctr_points.size() / 2 - 1, precision);
         BezierShader.use();
         glBindVertexArray(line_VAO);
         glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * line_points.size(), line_points.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * line1.get_line_num() * 2, line1.get_line_pointer(), GL_STATIC_DRAW);
         BezierShader.setVec3("Color", glm::vec3(0.0f, 1.0f, 1.0f));
-        glDrawArrays(GL_LINES, 0, line_points.size()/2);
+        glDrawArrays(GL_LINES, 0, line1.get_line_num());
 
         glfwSwapBuffers(window);
         glfwPollEvents();
