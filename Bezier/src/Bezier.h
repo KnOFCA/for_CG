@@ -7,10 +7,11 @@
 
 /** @brief class contain all info to draw a Bezier line.\brief
  *
- *  @detail coordinate sys: zero point in the center of window, x right, y up.\n
+ *  coordinate sys: zero point in the center of window, x right, y up.\n
  *
  *  data range: -1.0f to 1.0f.\n
  * 
+ *  @attention (1). To simplify draw line function in opengl, line_points array store all middle points twice. \n
  *  @exception
  */
 class Bezier

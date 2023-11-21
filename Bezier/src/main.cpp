@@ -13,7 +13,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window, Bezier& bezier);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-//Todo: consider use factory to register diffrent func for diffrent Bezier line
+//TODO: consider use factory to register diffrent func for diffrent Bezier line
 void mouse_clickCallBack(GLFWwindow* window, int button, int state, int mod);
 //set binomial coefficients
 void set_BC_arr(std::vector<float>& BC_arr, int n);
@@ -29,6 +29,8 @@ const unsigned int SCR_HEIGHT = 600;
 int current_ctr_point = 1;
 float speed = 0.01;
 
+//TODO: consider a way to avoid global variable 
+//dependent func: mouse_clickCallBack
 Bezier line1;
 
 int main()
