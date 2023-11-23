@@ -146,12 +146,10 @@
     <ClCompile Include="src\Bezier.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\glad.c" />
-    <ClCompile Include="src\stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Bezier.h" />
     <ClInclude Include="src\objects.h" />
-    <ClInclude Include="src\thread pool.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

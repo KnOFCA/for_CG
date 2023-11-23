@@ -11,7 +11,7 @@
  *
  *  data range: -1.0f to 1.0f.\n
  * 
- *  @attention (1). To simplify draw line function in opengl, line_points array store all middle points twice. \n
+ *  @attention (1). To simplify using of draw line function in opengl, line_points array store all middle points twice. \n
  *  @exception
  */
 class Bezier
@@ -63,10 +63,10 @@ public:
 	 *  @brief function to set control point.
 	 *
 	 *  @exception Throw exception if order out of range.
-	 *  @param[in] order: order in the control point array, value from 0 to (control points num - 1).
+	 *  @param[in] index: index in the control point array, value from 0 to (control points num - 1).
 	 *  @param[in] x & y: where the new pos is.
 	 */
-	void set_ctr_point(int order, float x, float y);
+	void set_ctr_point(int index, float x, float y);
 
 	/**
 	 *  @brief calculate binomial coefficients array.
@@ -131,4 +131,84 @@ public:
 	 */
 	void reset_ctr_points();
 
+};
+
+template<typename T>
+	concept is_Bezier = (typeid(T) == typeid(Bezier));
+
+/**
+ * @brief Class to contain up to 64 Bezier class.\brief
+ * 
+ * @attention (1). 
+ */
+class Bezier_array
+{
+	Bezier** _pool;
+	std::uint64_t _flag;
+
+	int find_usable_flag()
+	{
+		int pos = -1;
+		for (int i = 0; i < 64; i++) {
+			if (!check_flag(i)) {
+				pos = i;
+				break;
+			}
+		}
+		return pos;
+	}
+
+	void add(){}
+
+public:
+	static const int MAX_SIZE = 64;
+
+	bool check_flag(int pos)
+	{
+		return _flag & ((std::uint64_t)1 << pos);
+	}
+
+	Bezier_array() :_flag(0) {
+		_pool = new Bezier * [64](nullptr);
+	}
+	~Bezier_array()
+	{
+		for (int i = 0; i < 64; i++) {
+				delete _pool[i];
+		}
+		delete _pool;
+	}
+
+	void add(Bezier in);
+
+	template<typename T, typename... others>
+	void add(T in, others... arg) {
+		if (!(typeid(T) == typeid(Bezier))) {
+//TODO: consider use concept to avoid this exception.
+			throw std::exception("ERROR: pass a non-Bezier class in Bezier_array's add function.");
+		}
+		int pos = find_usable_flag();
+		if (pos == -1) {
+			throw std::exception("ERROR: no space to add more Bezier obj.");
+			return;
+		}
+		_pool[pos] = new Bezier;
+		*_pool[pos] = std::move(in);
+		_flag += ((std::uint64_t)1 << pos);
+
+		add(arg...);
+	}
+
+	Bezier& operator[](int pos) {
+		if (_flag & ((unsigned long long)1 << pos)) {
+			return *(_pool[pos]);
+		}
+		else{
+			throw std::exception("ERROR: index out of range.");
+		}
+	}
+
+	void clear();
+
+	void clear(int index);
 };
