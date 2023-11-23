@@ -1,15 +1,16 @@
 #include "Bezier.h"
 
-void Bezier::set_ctr_point(int order, float x, float y)
+void Bezier::set_ctr_point(int index, float x, float y)
 {
-	if (order<0 || order>BC_order) {
+	if (index<0 || index>BC_order) {
 		throw std::exception("Error while set control point's pos: point's order out of range.");
 	}
 	else
 	{
-		ctr_points[2 * order] = x;
-		ctr_points[2 * order + 1] = y;
+		ctr_points[2 * index] = x;
+		ctr_points[2 * index + 1] = y;
 	}
+    set_line_points();
 }
 
 void Bezier::set_BC_arr()
@@ -107,4 +108,32 @@ void Bezier::reset_ctr_points()
     BC_order = ss_ctr_points.size() / 2;
     set_BC_arr();
     set_line_points();
+}
+
+void Bezier_array::add(Bezier in)
+{
+    int pos = find_usable_flag();
+    if (pos == -1) {
+        throw std::exception("ERROR: no space to add more Bezier obj.");
+        return;
+    }
+    _pool[pos] = new Bezier;
+    *_pool[pos] = std::move(in);
+    _flag += ((std::uint64_t)1 << pos);
+    return;
+}
+
+void Bezier_array::clear()
+{
+    for (int i = 0; i < 64; i++) {
+        delete _pool[i];
+        _pool[i] = nullptr;
+    }
+
+}
+
+void Bezier_array::clear(int index)
+{
+    delete _pool[index];
+    _pool[index] = nullptr;
 }

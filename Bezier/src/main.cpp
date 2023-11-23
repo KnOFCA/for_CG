@@ -15,10 +15,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 //TODO: consider use factory to register diffrent func for diffrent Bezier line
 void mouse_clickCallBack(GLFWwindow* window, int button, int state, int mod);
-//set binomial coefficients
-void set_BC_arr(std::vector<float>& BC_arr, int n);
-//calculate line
-void set_line_points(std::vector<float>& line_points_arr, const std::vector<float>& BC_arr, const std::vector<float>& ctr_points, int n, float precision);
+void load_log(const char* path);
 
 // settings
 #ifndef SIZE
@@ -26,12 +23,13 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 #endif // !SIZE
 
-int current_ctr_point = 1;
+int current_ctr_point = 1, current_ctr_line = 0;
 float speed = 0.01;
 
 //TODO: consider a way to avoid global variable 
 //dependent func: mouse_clickCallBack
-Bezier line1;
+Bezier_array lines;
+int cur_line = 0;
 
 int main()
 {
@@ -63,6 +61,10 @@ int main()
 
     Shader BezierShader("D:\\Source\\repos\\for_CG\\Bezier\\src\\Shader\\vertex shader\\Bezier.vert", "D:\\Source\\repos\\for_CG\\Bezier\\src\\Shader\\fragment shader\\Bezier.frag");
 
+    Bezier line1,line2;
+    line2.set_ctr_point(0, -0.9, -0.9);
+
+    lines.add(line1,line2);
 
     unsigned int ctr_VBO, ctr_VAO;
     glGenVertexArrays(1, &ctr_VAO);
@@ -88,27 +90,36 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(0);
+    std::cout.tie(0);
+
+    load_log("src/Readme.txt");
     while (!glfwWindowShouldClose(window))
     {
-        processInput(window, line1);
+        processInput(window, lines[cur_line]);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // render here
-        BezierShader.use();
-        glBindVertexArray(ctr_VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, ctr_VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * line1.get_ctr_num() * 2, line1.get_ctr_pointer(), GL_STATIC_DRAW);
-        BezierShader.setVec3("Color", glm::vec3(1.0f, 1.0f, 0.0f));
-        glDrawArrays(GL_POINTS, 0, line1.get_ctr_num());
+        for (int index = 0; index < Bezier_array::MAX_SIZE; index++) {
+            if (lines.check_flag(index)) {
+                BezierShader.use();
+                glBindVertexArray(ctr_VAO);
+                glBindBuffer(GL_ARRAY_BUFFER, ctr_VBO);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(float) * lines[index].get_ctr_num() * 2, lines[index].get_ctr_pointer(), GL_STATIC_DRAW);
+                BezierShader.setVec3("Color", glm::vec3(1.0f, 1.0f, 0.0f));
+                glDrawArrays(GL_POINTS, 0, lines[index].get_ctr_num());
 
-        BezierShader.use();
-        glBindVertexArray(line_VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * line1.get_line_num() * 2, line1.get_line_pointer(), GL_STATIC_DRAW);
-        BezierShader.setVec3("Color", glm::vec3(0.0f, 1.0f, 1.0f));
-        glDrawArrays(GL_LINES, 0, line1.get_line_num());
+                BezierShader.use();
+                glBindVertexArray(line_VAO);
+                glBindBuffer(GL_ARRAY_BUFFER, line_VBO);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(float) * lines[index].get_line_num() * 2, lines[index].get_line_pointer(), GL_STATIC_DRAW);
+                BezierShader.setVec3("Color", glm::vec3(0.0f, 1.0f, 1.0f));
+                glDrawArrays(GL_LINES, 0, lines[index].get_line_num());
+            }
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -145,7 +156,7 @@ void processInput(GLFWwindow* window, Bezier& bezier)
         bezier.reset_ctr_points();
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
-        speed = 0.005;
+        speed = 0.001;
     }
     else speed = 0.01;
 }
@@ -169,75 +180,50 @@ void mouse_clickCallBack(GLFWwindow* window, int button, int state, int mod)
     double x, y;
     if (button == GLFW_MOUSE_BUTTON_LEFT && state == GLFW_PRESS) {
         glfwGetCursorPos(window, &x, &y);
-        for (int i = 0; i < line1.get_ctr_num(); i++) {
-            if (abs((line1.get_ctr_pointer()[2 * i]+1) * SCR_WIDTH / 2 - x) <= 5 && abs((line1.get_ctr_pointer()[2 * i + 1]-1) * SCR_HEIGHT / 2 + y) <= 5)
-                current_ctr_point = i;
+        bool should_break = false;
+        for (int index = 0; index < Bezier_array::MAX_SIZE; index++) {
+            if (lines.check_flag(index)) {
+                for (int i = 0; i < lines[index].get_ctr_num(); i++) {
+                    if (abs((lines[index].get_ctr_pointer()[2 * i] + 1) * SCR_WIDTH / 2 - x) <= 5 && abs((lines[index].get_ctr_pointer()[2 * i + 1] - 1) * SCR_HEIGHT / 2 + y) <= 5) {
+                        current_ctr_point = i;
+                        cur_line = index;
+                        should_break = true;
+                        break;
+                    }
+                }
+                if (should_break) {
+#ifdef _DEBUG
+                    std::cout << index << " " << current_ctr_point << " " << x - SCR_WIDTH / 2 << " " << -y + SCR_HEIGHT / 2 << std::endl;
+#endif
+                    break;
+                }
+            }
         }
-        std::cout << current_ctr_point << " " << x - SCR_WIDTH / 2 << " " << -y + SCR_HEIGHT / 2 << std::endl;
+
     }
     if (button == GLFW_MOUSE_BUTTON_RIGHT && state == GLFW_PRESS) {
         glfwGetCursorPos(window, &x, &y);
-        line1.add_ctr_point((x - SCR_WIDTH / 2) * 2 / SCR_WIDTH, (SCR_HEIGHT / 2 - y) * 2 / SCR_HEIGHT);
+        lines[cur_line].add_ctr_point((x - SCR_WIDTH / 2) * 2 / SCR_WIDTH, (SCR_HEIGHT / 2 - y) * 2 / SCR_HEIGHT);
+    }
+    if (button == GLFW_MOUSE_BUTTON_MIDDLE && state == GLFW_PRESS) {
+        lines.add(Bezier());
     }
 }
 
-void set_BC_arr(std::vector<float>& BC_arr, int n)
+void load_log(const char* path)
 {
-    BC_arr.clear();
-    int k, j;
-    for (k = 0; k <= n; k++)
+    std::ifstream infile;
+    infile.open(path, std::ios::in);
+    if (!infile.is_open())
     {
-        BC_arr.push_back(1);
-        for (j = n; j >= k + 1; j--)//1*n*(n-1)*(n-2)*...*(k+2)*(k+1)
-        {
-            BC_arr[k] *= j;
-        }
-        for (j = n - k; j >= 2; j--)//иой╫ / ( (n-k)*(n-k-1)*...*3*2*1 )
-        {
-            BC_arr[k] /= j;
-        }
-    }
-}
-
-void set_line_points(std::vector<float>& line_points_arr, const std::vector<float>& BC_arr, const std::vector<float>& ctr_points, int n, float precision)
-{
-    if (n + 1 != BC_arr.size()) {
-        std::cout << "ERROR: orders of binomial coefficients array and Bezier points not match";
+        std::cout << "ERROR: can't open log at " << path << std::endl;
         return;
     }
-    if (n + 1 != ctr_points.size()/2) {
-        std::cout << "ERROR: orders of control points array and Bezier points not match";
-        return;
-    }
-
-    line_points_arr.clear();
-
-    line_points_arr.push_back(*(ctr_points.rbegin() + 1));
-    line_points_arr.push_back(*ctr_points.rbegin());
-
-    //t in t^mt^{n-m}
-    double t = precision;
-    int point_num = 1;
-    while (t<=1)
+    std::string buf;
+    while (getline(infile, buf))
     {
-        line_points_arr.push_back(0);
-        line_points_arr.push_back(0);
-
-        double p = pow(t, n);
-        for (int i = 0; i < n + 1; i++) {
-            line_points_arr[4 * point_num - 2] += BC_arr[i] * p * ctr_points[2 * i];
-            line_points_arr[4 * point_num - 1] += BC_arr[i] * p * ctr_points[2 * i + 1];
-            p = p * (1 - t) / t;
-        }
-        line_points_arr.push_back(line_points_arr[4 * point_num - 2]);
-        line_points_arr.push_back(line_points_arr[4 * point_num - 1]);
-        point_num++;
-        t += precision;
+        std::cout << buf << std::endl;
     }
-
-    line_points_arr.push_back(ctr_points[0]);
-    line_points_arr.push_back(ctr_points[1]);
-
-    return;
+    infile.close();
 }
 #endif

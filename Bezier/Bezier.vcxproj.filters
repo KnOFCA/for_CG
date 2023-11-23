@@ -21,18 +21,12 @@
     <ClCompile Include="src\glad.c">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\stb_image.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\Bezier.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\objects.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\thread pool.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\Bezier.h">

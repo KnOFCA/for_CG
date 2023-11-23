@@ -11,7 +11,7 @@
  *
  *  data range: -1.0f to 1.0f.\n
  * 
- *  @attention (1). To simplify draw line function in opengl, line_points array store all middle points twice. \n
+ *  @attention (1). To simplify using of draw line function in opengl, line_points array store all middle points twice. \n
  *  @exception
  */
 class Bezier
@@ -63,10 +63,10 @@ public:
 	 *  @brief function to set control point.
 	 *
 	 *  @exception Throw exception if order out of range.
-	 *  @param[in] order: order in the control point array, value from 0 to (control points num - 1).
+	 *  @param[in] index: index in the control point array, value from 0 to (control points num - 1).
 	 *  @param[in] x & y: where the new pos is.
 	 */
-	void set_ctr_point(int order, float x, float y);
+	void set_ctr_point(int index, float x, float y);
 
 	/**
 	 *  @brief calculate binomial coefficients array.
@@ -131,4 +131,113 @@ public:
 	 */
 	void reset_ctr_points();
 
+};
+
+template<typename T>
+	concept is_Bezier = (typeid(T) == typeid(Bezier));
+
+/**
+ * @brief Class to contain up to 64 Bezier class.\brief
+ * 
+ * @attention (1). Delete a object in this array does not effect others' index.You may need to consider maintain the index carefully.\n
+ * (2). All unusing or deleted position will refer to nullptr.
+ */
+class Bezier_array
+{
+	Bezier** _pool;
+	std::uint64_t _flag;
+
+	int find_usable_flag()
+	{
+		int pos = -1;
+		for (int i = 0; i < 64; i++) {
+			if (!check_flag(i)) {
+				pos = i;
+				break;
+			}
+		}
+		return pos;
+	}
+
+	void add(){}
+
+public:
+	static const int MAX_SIZE = 64;
+
+	/**
+	 * @brief Check if one pos is usable.
+	 * 
+	 * @param[in] pos
+	 * @return boolean true for usable.
+	 */
+	bool check_flag(int pos)
+	{
+		return _flag & ((std::uint64_t)1 << pos);
+	}
+
+	Bezier_array() :_flag(0) {
+		_pool = new Bezier * [64](nullptr);
+	}
+	~Bezier_array()
+	{
+		for (int i = 0; i < 64; i++) {
+				delete _pool[i];
+		}
+		delete _pool;
+	}
+
+	/**
+	 * @brief Add one Bezier line if there's space in array.
+	 * 
+	 * @param[in] in: a Bezier line to pass in.
+	 */
+	void add(Bezier in);
+
+	template<typename T, typename... others>
+	void add(T in, others... arg) {
+		if (!(typeid(T) == typeid(Bezier))) {
+//TODO: consider use concept to avoid this exception.
+			throw std::exception("ERROR: pass a non-Bezier class in Bezier_array's add function.");
+		}
+		int pos = find_usable_flag();
+		if (pos == -1) {
+			throw std::exception("ERROR: no space to add more Bezier obj.");
+			return;
+		}
+		_pool[pos] = new Bezier;
+		*_pool[pos] = std::move(in);
+		_flag += ((std::uint64_t)1 << pos);
+
+		add(arg...);
+	}
+
+	/**
+	 * @param[in] index
+	 * @return a referance object at index pos
+	 * @exception Undefined behavior when param index greater than 63.
+	 * @exception Throw exception when index is not usable.
+	 */
+	Bezier& operator[](int index) {
+		if (_flag & ((unsigned long long)1 << index)) {
+			return *(_pool[index]);
+		}
+		else{
+			throw std::exception("ERROR: index not usable.");
+		}
+	}
+
+	/**
+	 * @brief Clear all object in the array.
+	 * 
+	 */
+	void clear();
+
+	/**
+	 * @brief Clear object at the index.
+	 * 
+	 * @attention Deleted position will refer to nullptr.
+	 * 
+	 * @param[in] index
+	 */
+	void clear(int index);
 };
