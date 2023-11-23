@@ -1,13 +1,12 @@
 #if 1
 #include <iostream>
-#include <chrono>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include "objects.h"
 #include "Bezier.h"
+#include "shader.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window, Bezier& bezier);

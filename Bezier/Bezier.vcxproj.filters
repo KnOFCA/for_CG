@@ -26,9 +26,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\objects.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\Bezier.h">
       <Filter>头文件</Filter>
     </ClInclude>

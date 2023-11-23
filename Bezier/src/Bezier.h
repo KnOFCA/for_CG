@@ -1,10 +1,6 @@
 #pragma once
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-
-#include "objects.h"
-
+#include <vector>
+#include <typeinfo>
 /** @brief class contain all info to draw a Bezier line.\brief
  *
  *  coordinate sys: zero point in the center of window, x right, y up.\n
